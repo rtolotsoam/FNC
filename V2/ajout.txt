@@ -1,0 +1,7 @@
+- ajout de deux tables pour la création de "Admin actions correctives" : nc_action_liste et nc_fnc_action
+- Interface pour l'insertion des différentes actions
+- Interface affectation correctives et assignation action corrective
+
+
+FNC RECAP EXPORT EXPORT SANS PHPEXCEL
+

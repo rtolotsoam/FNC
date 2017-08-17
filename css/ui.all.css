@@ -1,0 +1,24 @@
+@import url("ui.core.css");
+@import url("ui.dialog.css");
+@import url("ui.tabs.css");
+@import url("ui.datepicker.css");
+@import url("ui.theme.css");
+@import url("tablesorter.css") ;
+body{
+	 font-size: 12px;
+	 font-family: verdana;
+	 overflow: auto;
+}
+
+.content{
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	bottom: 1%;
+}
+
+.content iframe{
+	width: 98%;
+	height:  88%;
+	overflow: auto;
+}

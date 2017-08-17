@@ -1,0 +1,116 @@
+legend {
+	font-size: medium;
+	color: #666666;
+}
+.txtInput{
+	width: 175px;
+	height: 20px;
+	color: #666666;
+	font-size: 12px;
+	background-color: #ffffff;
+	border: 1px solid gray;
+}
+.slct{
+	width: 175px;
+	height: 20px;
+	color: #666666;
+	font-size: 12px;
+	border: 1px solid gray;
+}
+.txtArea{
+	width: 175px;
+	height: 70px;
+	color: #666666;
+	font-size: 12px;
+	border: 1px solid gray;
+}
+.txtAreaa{
+	width: 870px;
+	
+	
+	color: #666666;
+	font-size: 12px;
+	border: 1px solid gray;
+}
+td{
+	vertical-align: top;
+	font-size: 11px;
+}
+input.ui-state-default{
+	width: 125px;
+	height: 20px;
+	text-align: center;
+	font-family: verdana;
+	letter-spacing: 1px;
+	cursor: pointer;
+}
+.style2{
+	color: #FF0000;
+}
+tr.titre{
+	font-weight: bold;
+}
+
+#btnMenu .ui-state-default{
+	width: 70px;
+	height: 20px;
+	text-align: center;
+	font-family: verdana;
+	font-size: smaller;
+	letter-spacing: 1px;
+	cursor: pointer;
+}
+
+.entete{
+
+	width: 100%;
+	font-weight: bold;
+}
+
+.td-hover
+{
+	background: #E6E6FA ;
+	cursor: pointer ;
+}
+
+#back-top a {
+	width: 108px;
+	display: block;
+	text-align: center;
+	font: 11px/100% Arial, Helvetica, sans-serif;
+	text-transform: uppercase;
+	text-decoration: none;
+	color: #bbb;
+	/* background color transition */
+	-webkit-transition: 1s;
+	-moz-transition: 1s;
+	transition: 1s;
+}
+#back-top a:hover {
+	color: #000;
+}
+/* arrow icon (span tag) */
+#back-top span {
+	width: 108px;
+	height: 108px;
+	display: block;
+	margin-bottom: 7px;
+	background: #ddd url(up-arrow.png) no-repeat center center;
+	/* rounded corners */
+	-webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+	border-radius: 15px;
+	/* background color transition */
+	-webkit-transition: 1s;
+	-moz-transition: 1s;
+	transition: 1s;
+}
+#back-top a:hover span {
+	background-color: #777;
+}
+#back-top {
+	position: fixed;
+	bottom: 30px;
+	margin-left: -150px;
+}
+.theadColor {style="background:#1E5799; font: bold 12px/18px Arial,sans-serif;border-collapse: collapse;color: #fff; text-shadow: 0 1px 0 rgba(204, 204, 204, 0.7);"}

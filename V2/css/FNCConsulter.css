@@ -1,0 +1,49 @@
+td.class1{
+	color: #ffffff;
+	font-size: 14px ;
+	background-color: #000066;
+	padding-left: 1%;
+	vertical-align: top;
+} 
+td.class2{
+	font-size: 12px ;
+	padding-left: 1%;
+	background-color: #c1ffc1;
+	vertical-align: top;
+}
+td.class3{
+	font-size: 12px ;
+	padding-left: 1%;
+	vertical-align: top;
+}
+td.class4{
+	font-size: 12px ;
+	padding-left: 1%;
+	background-color: #cccccc;
+	vertical-align: top;
+}
+td.class4{
+	font-size: 12px ;
+	padding-left: 1%;
+	background-color: #ffff99;
+	vertical-align: top;
+}
+input.ui-state-default{
+	width: 100px;
+	height: 20px;
+	text-align: center;
+	font-family: verdana;
+	letter-spacing: 1px;
+	cursor: pointer;
+}
+td.class0{
+	font-size: 12px;
+	text-align: center;
+}
+legend {
+	font-size: medium;
+	color: #666666;
+}
+.table{
+	border: 1px solid black;
+}
