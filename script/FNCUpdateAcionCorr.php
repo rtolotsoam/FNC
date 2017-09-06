@@ -4,180 +4,257 @@ require_once "DBConnect.php";
 $etat     = $_REQUEST['etat'];
 $idfnc    = $_REQUEST['idfnc'];
 $id_infos = $_REQUEST['id_inf'];
+$matricule = $_REQUEST['matricule'];
+
 if (isset($_REQUEST['etat'])) {
-    echo $sql = "update nc_fnc_infos SET etat = '" . $etat . "' where id =  '" . $id_infos . "'";
+    
+    $sql = "update nc_fnc_infos SET etat = '" . $etat . "' where id =  '" . $id_infos . "'";
     $queryS   = @pg_query($sql);
-}
 
-$type = trim($_REQUEST['comment']);
-// $date_fin = ;
-// $date_suivi = ;
-$etat = 0;
-
-switch ($type) {
-
-    case 'comment_only':
-        $content_comment = $_REQUEST['data'];
-        $content_comment = pg_escape_string(utf8_decode($_REQUEST['data']));
-        $sql             = "update nc_fnc_infos SET commentaire = '" . $content_comment . "' where id =" . $id_infos;
-        $query           = @pg_query($sql);
+    if($queryS){
         $etat            = 1;
-        if (!$query) {
-            $etat = 0;
-        }
+        addLog("Update : \t etats_realisation_actions ==> ".$etat."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+    }else{
+        $etat            = 0;
+        addLog("Erreur connexion : \t base de donne indisponible, \t Update : \tetats_realisation_actions ==> ".$etat."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+    }
 
-        break;
 
-    case 'date_fin':
-        $date_fin = $_REQUEST['data'];
-        $sql      = "update nc_fnc_infos SET date_fin = '" . $date_fin . "' where id =" . $id_infos;
-        $query    = @pg_query($sql);
-        $etat     = 1;
-        if (!$query) {
-            $etat = 0;
-        }
+}else{
 
-        break;
+    $type = trim($_REQUEST['comment']);
+    // $date_fin = ;
+    // $date_suivi = ;
+    $etat = 0;
 
-    case 'date_suivi':
-        $date_suivi = $_REQUEST['data'];
-        $sql        = "update nc_fnc_infos SET date_suivi = '" . $date_suivi . "' where id =" . $id_infos;
-        $query      = @pg_query($sql);
-        $etat       = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
 
-    case 'update_gen':
-        $gen   = $_REQUEST['data'];
-        $sql   = "update nc_fnc_infos SET generalisation = '" . $gen . "' where id =" . $id_infos;
-        $query = @pg_query($sql);
-        $etat  = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
 
-    case 'valid_action':
-        $valid = $_REQUEST['data'];
-        $sql   = "update nc_fnc_infos SET valid_action = '" . $valid . "' where id =" . $id_infos;
-        $query = @pg_query($sql);
-        $etat  = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
+    switch ($type) {
 
-    case 'taux_avcmnt':
+        case 'comment_only':
+            $content_comment = $_REQUEST['data'];
+            $content_comment = pg_escape_string(utf8_decode($_REQUEST['data']));
+            $sql             = "update nc_fnc_infos SET commentaire = '" . $content_comment . "' where id =" . $id_infos;
+            $query           = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t commenatire ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $content_comment)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+            }else{
+                $etat = 1;
+                addLog("Update : \t commentaire ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $content_comment)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);   
+            }
 
-        $tx_avcmnt_span = $_REQUEST['tx_avcmnt_span'];
+            break;
 
-        $sql   = "update nc_fnc_infos SET tx_avacmnt = " . $tx_avcmnt_span . " where id =" . $id_infos;
-        $query = @pg_query($sql);
-        $etat  = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
+        case 'date_fin':
+            $date_fin = $_REQUEST['data'];
+            $sql      = "update nc_fnc_infos SET date_fin = '" . $date_fin . "' where id =" . $id_infos;
+            $query    = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t date_fin ==> ".$date_fin."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+            }else{
+                $etat = 1;
+                addLog("Update : \t datet_fin ==> ".$date_fin."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);    
+            }
 
-    case 'faille':
+            break;
 
-        $faille = $_REQUEST['data'];
+        case 'date_suivi':
+            $date_suivi = $_REQUEST['data'];
+            $sql        = "update nc_fnc_infos SET date_suivi = '" . $date_suivi . "' where id =" . $id_infos;
+            $query      = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t date_suivi ==> ".$date_suivi."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+            }else{
+                $etat       = 1;
+                addLog("Update : \t datet_suivi ==> ".$date_suivi."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);    
+            }
+            break;
 
-        $sql = "
-                    UPDATE
-                        NC_FNC_INFOS
-                    SET FAILLE_IDENTIFIEE   =   '" . pg_escape_string(utf8_decode($faille)) . "'
-                    WHERE
-                        ID  =   " . $id_infos
-        ;
-        $query = @pg_query($sql);
-        $etat  = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
+        case 'update_gen':
+            $gen   = utf8_decode($_REQUEST['data']);
+            $sql   = "update nc_fnc_infos SET generalisation = '" . pg_escape_string($gen) . "' where id =" . $id_infos;
+            $query = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t generalisation ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $gen)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+            }else{
+                $etat  = 1;
+                addLog("Update : \t generalisation ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $gen)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule); 
+            }
+            break;
 
-    case 'impact':
+        case 'valid_action':
+            $valid = $_REQUEST['data'];
+            $sql   = "update nc_fnc_infos SET valid_action = '" . $valid . "' where id =" . $id_infos;
+            $query = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t validation_action ==> ".$valid."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+            }else{
+                $etat  = 1; 
+                addLog("Update : \t validation_action ==> ".$valid."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);    
+            }
+            break;
 
-        $impact = $_REQUEST['data'];
+        case 'taux_avcmnt':
 
-        $sql = "
-                    UPDATE
-                        NC_FNC_INFOS
-                    SET IMPACT   =   '" . pg_escape_string(utf8_decode($impact)) . "'
-                    WHERE
-                        ID  =   " . $id_infos
-        ;
-        $query = @pg_query($sql);
-        $etat  = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
+            $tx_avcmnt_span = $_REQUEST['tx_avcmnt_span'];
 
-    case 'description':
+            $sql   = "update nc_fnc_infos SET tx_avacmnt = " . $tx_avcmnt_span . " where id =" . $id_infos;
+            $query = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t taux_avancement ==> ".$tx_avcmnt_span."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+            }else{
+                $etat  = 1;
+                addLog("Update : \t taux_avancement ==> ".$tx_avcmnt_span."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);        
+            }
+            break;
 
-        $description = $_REQUEST['data'];
+        case 'faille':
 
-        $sql = "
-                UPDATE
-                    NC_ACTION_LISTE
-                SET LIBELLE =   '" . pg_escape_string(utf8_decode($description)) . "'
-                WHERE
-                    ID  =   (
-                        SELECT
-                            ACTION_LISTE_ID
-                        FROM
-                            NC_FNC_ACTION
+            $faille = utf8_decode($_REQUEST['data']);
+
+            $sql = "
+                        UPDATE
+                            NC_FNC_INFOS
+                        SET FAILLE_IDENTIFIEE   =   '" . pg_escape_string($faille) . "'
                         WHERE
-                            FNC_ID      =   '" . $idfnc . "'
-                        AND FNC_INFO_ID =   " . $id_infos . "
-                    )"
-        ;
-        $query = @pg_query($sql);
-        $etat  = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
+                            ID  =   " . $id_infos
+            ;
+            $query = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
 
-    case 'efficacite':
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t faille_identifie ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $faille)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
 
-        $efficacite = $_REQUEST['data'];
+            }else{
+                $etat  = 1;
 
-        $sql = "
+                addLog("Update : \t faille_identifiee ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $faille)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);  
+            }
+            break;
+
+        case 'impact':
+
+            $impact = utf8_decode($_REQUEST['data']);
+
+            $sql = "
+                        UPDATE
+                            NC_FNC_INFOS
+                        SET IMPACT   =   '" . pg_escape_string($impact) . "'
+                        WHERE
+                            ID  =   " . $id_infos
+            ;
+            $query = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t impact ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $impact)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+
+            }else{
+                $etat  = 1;    
+
+                addLog("Update : \t impact ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $impact)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule); 
+            }
+            break;
+
+        case 'description':
+
+            $description = utf8_decode($_REQUEST['data']);
+
+            $sql = "
                     UPDATE
-                        NC_FNC_INFOS
-                    SET INDIC_EFFICACITE   =   '" . pg_escape_string(utf8_decode($efficacite)) . "'
+                        NC_ACTION_LISTE
+                    SET LIBELLE =   '" . pg_escape_string($description) . "'
                     WHERE
-                        ID  =   " . $id_infos
-        ;
-        $query = @pg_query($sql);
-        $etat  = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
+                        ID  =   (
+                            SELECT
+                                ACTION_LISTE_ID
+                            FROM
+                                NC_FNC_ACTION
+                            WHERE
+                                FNC_ID      =   '" . $idfnc . "'
+                            AND FNC_INFO_ID =   " . $id_infos . "
+                        )"
+            ;
+            $query = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
 
-    case 'objectif':
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t description ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $description)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
 
-        $obj = $_REQUEST['data'];
+            }else{
+                $etat  = 1;
 
-        $sql = "
-                    UPDATE
-                        NC_FNC_INFOS
-                    SET OBJ_ECHEANCE   =   '" . pg_escape_string(utf8_decode($obj)) . "'
-                    WHERE
-                        ID  =   " . $id_infos
-        ;
-        $query = @pg_query($sql);
-        $etat  = 1;
-        if (!$query) {
-            $etat = 0;
-        }
-        break;
+                addLog("Update : \t description ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $description)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule); 
+            }
+            break;
+
+        case 'efficacite':
+
+            $efficacite = utf8_decode($_REQUEST['data']);
+
+            $sql = "
+                        UPDATE
+                            NC_FNC_INFOS
+                        SET INDIC_EFFICACITE   =   '" . pg_escape_string($efficacite) . "'
+                        WHERE
+                            ID  =   " . $id_infos
+            ;
+            $query = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+
+                addLog("Erreur connexion : \t base de donne indisponible, \t Update : \t indicateur_efficacite ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $efficacite)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+
+            }else{
+                $etat  = 1; 
+
+                addLog("Update : \t indicateur_efficacite ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $efficacite)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule); 
+
+            }
+            break;
+
+        case 'objectif':
+
+            $obj = utf8_decode($_REQUEST['data']);
+
+            $sql = "
+                        UPDATE
+                            NC_FNC_INFOS
+                        SET OBJ_ECHEANCE   =   '" . pg_escape_string($obj) . "'
+                        WHERE
+                            ID  =   " . $id_infos
+            ;
+            $query = @pg_query($sql);
+            
+            if (!$query) {
+                $etat = 0;
+
+                addLog("Erreur connexion ; \t base de donne indisponible ; \t Update :  objectif_echeance ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $obj)."\t; id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);
+
+            }else{
+                $etat  = 1; 
+
+                addLog("Update : \t objectif_echeance ==> ".preg_replace(array("#\\n#", "#\\t#"), " ", $obj)."\t, id_info : ".$id_infos."\t, id_fnc : ".$idfnc." \t, matricule : ".$matricule);    
+            }
+            break;
+    }
+
 }
 
 echo $etat;

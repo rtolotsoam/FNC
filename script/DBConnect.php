@@ -3,6 +3,19 @@
 
 	include ("/var/www.cache/dgconn.inc") ;
 
+	function addLog($event)
+	{
+	    $dateTime = date("D, d M Y H:i:s");
+	    $dateTime = "[".$dateTime."]";
+
+	    $date = date("d_m_Y");
+	 
+	    $event = $dateTime."\t ".$event."\n";
+	    $fichier = "log/fichier_".$date.".log";
+	 
+	    file_put_contents($fichier, $event, FILE_USE_INCLUDE_PATH | FILE_APPEND);
+	}
+
 	function findGroup($conn){
 		$iMatricule = $_SESSION['matricule'] ;
 		$sql = "SELECT distinct idgroupe, id_groupe_bd FROM groupe_bd

@@ -110,41 +110,6 @@ if (in_array($_SESSION['matricule'], $array_admin_gen)) {
           }
 
 
-          // ajouter par mle 9092, pour mettre à jour le champs généralisation
-          function up_generalisation(id){
-
-            var gen = $('#gen_'+id).val();
-            var gen_vrai = gen.trim();
-            var ref = $('#ref_'+id).val();
-            var idinfo = id;
-
-            if(confirm('Voulez-vous vraiment modifi\351e le FNC : '+ref+' ?')){
-
-                $.ajax({
-                     type: "POST",
-                     url: "FNCUpdateAcionCorr.php",
-                     data: {
-                           comment : 'update_gen',
-                           data : gen_vrai,
-                           id_inf:idinfo
-                     },
-                     success: function(rslt){
-
-                        if(rslt == 1)
-                        {
-                           $("#info_modif").show();
-                           setTimeout(function(){  $("#info_modif").css('display','none'); }, 1500);
-                        }
-                     },
-                     async: false
-                });
-
-            }else{
-                return 0;
-            }
-
-        }
-
         </script>
 
     </head>
@@ -722,20 +687,10 @@ if ($toRes['valid_action'] == "0" || $toRes['valid_action'] == 0) {
         ?>
                             </td>
                             <td><?php echo $toRes['commentaire']; ?></td>
-                            <?php
-if (in_array($_SESSION['matricule'], $array_admin_gen)) {
-            ?>
-                            <td>
-                                <textarea onblur="up_generalisation(<?php echo $toRes['idinfo']; ?>);" id="gen_<?php echo $toRes['idinfo']; ?>" style="resize:none;"><?php echo trim($toRes['generalisation']); ?></textarea>
-                            </td>
-                            <?php
-} else {
-            ?>
-                                <td><?php echo $toRes['generalisation']; ?></td>
+                            
+                            <td><?php echo $toRes['generalisation']; ?></td>
 
-                            <?php
-}
-
+    <?php
         $tx_avacment = $toRes['tx_avacmnt'];
         $tx_restant  = 0;
         $tx_restant  = 100 - $tx_avacment;
