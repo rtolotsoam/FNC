@@ -69,8 +69,10 @@ echo "<input type='hidden' id='edit_autoris' value='" . $matr_autorise . "' />";
   <body>
 
   <?php
+$dateDeb = date('Y-m');
 $dateDeb_act = date('Y-m');
 $dateFin_act = date('Y-m-d');
+$dateDeb_act = $dateDeb_act."-01";
 ?>
 
 
@@ -102,7 +104,7 @@ Cette page permet de visualiser les actions correctives dont la validation de l'
   <div>
 
     <p align="right" style="float : right;">
-      <label for="dateDeb_act">Date de d&eacute;but d'actions : <input type="text" value="<?php if (isset($_REQUEST['debAct'])) {echo $_REQUEST['debAct'];} else {echo $dateDeb_act . '-01';}?>" id="dateDeb_act" name="dateDeb_act" /></label>
+      <label for="dateDeb_act">Date de d&eacute;but d'actions : <input type="text" value="<?php if (isset($_REQUEST['debAct'])) {echo $_REQUEST['debAct'];} else {echo $dateDeb . '-01';}?>" id="dateDeb_act" name="dateDeb_act" /></label>
       <label for="dateFin_act"> jusq' &agrave; <input type="text" id="dateFin_act" value="<?php if (isset($_REQUEST['finAct'])) {echo $_REQUEST['finAct'];} else {echo $dateFin_act;}?>" name="dateFin_act" /></label>
       <label> &nbsp; <input type="button" value="Afficher" onclick="searchDate();" style="cursor: pointer;"/></label>
       &nbsp;
@@ -243,7 +245,7 @@ if (isset($_REQUEST['debAct']) && isset($_REQUEST['finAct'])) {
                             AND NFA.FNC_INFO_ID     =       NFI.ID
                             AND NAL.TYPE            !=      'curative'
                             AND DATE_DEBUT          >=      '$dateDeb_act'  
-                            AND DATE_DEBUT          <=        '$dateFin_act'
+                            AND DATE_DEBUT          <=      '$dateFin_act'
                             GROUP BY
                                 NFA.ACTION_LISTE_ID
                             ,   NFI.DATE_DEBUT
@@ -322,7 +324,7 @@ if (isset($_REQUEST['debAct']) && isset($_REQUEST['finAct'])) {
                             AND NFA.FNC_INFO_ID     =       NFI.ID
                             AND NAL.TYPE            !=      'curative'
                             AND DATE_DEBUT          >=      '$dateDeb_act'  
-                            AND DATE_DEBUT          <=        '$dateFin_act'
+                            AND DATE_DEBUT          <=      '$dateFin_act'
                             GROUP BY
                                 NFA.ACTION_LISTE_ID
                             ,   NFI.DATE_DEBUT
@@ -402,15 +404,24 @@ for ($i = 0; $i < @pg_num_rows($rQueryId); $i++) {
     $gen_        = $resSelectId['gen_'];
     $inf_id       = $resSelectId['inf_id'];
 
-    $zSqlInfo = "
+    /*$zSqlInfo = "
                                     SELECT
                                         *
                                     FROM
                                     ("
-    ;
-    $zSqlInfo .= "
+    ;*/
+    $zSqlInfo = "
                                     SELECT DISTINCT
                                         NC_FICHE.FNC_CODE
+                                    ,   CASE
+                                                WHEN
+                                                    NC_FICHE.FNC_CODE   =   'QUAL'
+                                                OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                                                THEN
+                                                    B1.LIB_BU
+                                                ELSE
+                                                    B.LIB_BU
+                                        END LIB_BU
                                     ,   NC_FICHE.FNC_CREATEUR
                                     ,   NC_FICHE.\"fnc_creationDate\"   AS  DATE_CREAT
                                     ,   NC_FICHE.FNC_TYPE
@@ -448,9 +459,41 @@ for ($i = 0; $i < @pg_num_rows($rQueryId); $i++) {
     $zSqlInfo .= "
                                     FROM
                                         NC_FNC_INFOS
-                                    ,   NC_FNC_ACTION
-                                    ,   NC_ACTION_LISTE
-                                    ,   NC_FICHE
+                                        INNER JOIN
+                                                NC_FNC_ACTION
+                                            ON
+                                                NC_FNC_ACTION.FNC_INFO_ID   =   NC_FNC_INFOS.ID
+                                        INNER JOIN
+                                                NC_FICHE
+                                            ON
+                                                NC_FICHE.FNC_ID =   NC_FNC_ACTION.FNC_ID::integer
+                                        INNER JOIN
+                                                NC_ACTION_LISTE
+                                            ON
+                                                NC_ACTION_LISTE.ID  =   NC_FNC_ACTION.ACTION_LISTE_ID
+                                        LEFT JOIN
+                                                GU_APPLICATION  GA
+                                            ON
+                                                (
+                                                    NC_FICHE.FNC_CODE   !=  'QUAL'
+                                                AND NC_FICHE.FNC_CODE   !=  '0VVT001'
+                                                )
+                                            AND (
+                                                    GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 0, 4)
+                                                OR  GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 2, 3)
+                                                )
+                                        LEFT JOIN
+                                                BUSINESS_UNIT   B
+                                            ON
+                                                B.ID_BU =   GA.ID_BU
+                                        LEFT JOIN
+                                                BUSINESS_UNIT   B1
+                                            ON
+                                                (
+                                                    NC_FICHE.FNC_CODE   =   'QUAL'
+                                                OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                                                )
+                                            AND NC_FICHE.FNC_BU =   B1.ID_BU
                                     WHERE
                                         NC_FNC_INFOS.ID                 =   NC_FNC_ACTION.FNC_INFO_ID
                                     AND    NC_FNC_INFOS.ID              = $inf_id  
@@ -465,58 +508,14 @@ for ($i = 0; $i < @pg_num_rows($rQueryId); $i++) {
                                         OR  NC_FNC_INFOS.ETAT           =   'en cours'
                                         )
                                     AND NC_ACTION_LISTE.TYPE            !=  'curative'
-                                    AND NC_FNC_INFOS.IMPACT             =   '$imp_' 
+                                    AND NC_FNC_INFOS.IMPACT             =   '$imp_'
+                                    AND NC_FNC_INFOS.FAILLE_IDENTIFIEE                   =   '$faille_' 
                                      "
     ;
 
-    /* if (isset($_REQUEST['slctActionValidationFiltre'])) {
-    if (!empty($_REQUEST['slctActionValidationFiltre'])){
-    if($_REQUEST['slctActionValidationFiltre'] == 'en attente'){
-
-    $clWhere = " AND (nc_fnc_infos.etat = 'en attente' OR nc_fnc_infos.etat = '')";
-    }else{
-    $etat_inf = $_REQUEST['slctActionValidationFiltre'];
-    $clWhere = " AND nc_fnc_infos.etat = '{$etat_inf}' ";
-    }
-
-    }
-    }*/
+    
 
     /*$zSqlInfo .= "
-    )AS TEMP
-    LEFT JOIN
-    (
-    SELECT
-    DISTINCT
-    LIB_BU
-    ,   FNC_ID
-    FROM
-    NC_FICHE    F
-    INNER JOIN
-    GU_APPLICATION  A
-    ON
-    SUBSTRING(F.FNC_CODE FROM 1 FOR 3)  =   A.CODE
-    INNER JOIN
-    BUSINESS_UNIT   B
-    ON
-    B.ID_BU =   A.ID_BU
-    UNION
-    SELECT
-    LIB_BU
-    ,   FNC_ID
-    FROM    NC_FICHE    NCF
-    INNER JOIN
-    BUSINESS_UNIT   BU
-    ON
-    NCF.FNC_BU  =   BU.ID_BU
-    )   AS  TEMP2
-    ON
-    TEMP2.FNC_ID    =   TEMP.FNC_ID_L"
-    ;*/
-
-    /*==========================================================>*/
-
-    $zSqlInfo .= "
                            )AS  TEMP
                                 LEFT JOIN
                                     (
@@ -578,7 +577,8 @@ for ($i = 0; $i < @pg_num_rows($rQueryId); $i++) {
                                     )   AS  TEMP2
                                 ON
                                     TEMP2.FNC_ID    =   TEMP.FNC_ID_L"
-    ;
+    ;*/
+
 
     /*echo '</br>';
     echo '<pre>';

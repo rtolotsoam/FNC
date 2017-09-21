@@ -182,7 +182,7 @@ if (isset($_REQUEST['debAct']) && isset($_REQUEST['finAct'])) {
                             AND NFA.FNC_INFO_ID     =       NFI.ID
                             AND NAL.TYPE            !=      'curative'
                             AND DATE_DEBUT          >=      '$dateDeb_act'  
-                            AND DATE_DEBUT          <=        '$dateFin_act'
+                            AND DATE_DEBUT          <=      '$dateFin_act'
                             GROUP BY
                                 NFA.ACTION_LISTE_ID
                             ,   NFI.DATE_DEBUT
@@ -298,16 +298,25 @@ for ($i = 0; $i < @pg_num_rows($rQueryId); $i++) {
         $typeApp = utf8_decode($gAppeType);
     }
 
-    $zSqlInfo = "
+    /*$zSqlInfo = "
                             SELECT
                                 *
                             FROM
                             ("
-    ;
+    ;*/
 
-    $zSqlInfo .= "
+    $zSqlInfo = "
                             SELECT DISTINCT
                                 NC_FICHE.FNC_CODE
+                            ,   CASE
+                                        WHEN
+                                            NC_FICHE.FNC_CODE   =   'QUAL'
+                                        OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                                        THEN
+                                            B1.LIB_BU
+                                        ELSE
+                                            B.LIB_BU
+                                END LIB_BU
                             ,   NC_FICHE.FNC_CREATEUR
                             ,   NC_FICHE.\"fnc_creationDate\"   AS  DATE_CREAT
                             ,   NC_FICHE.FNC_TYPE
@@ -344,12 +353,44 @@ for ($i = 0; $i < @pg_num_rows($rQueryId); $i++) {
     $zSqlInfo .= "
                             FROM
                                 NC_FNC_INFOS
-                            ,   NC_FNC_ACTION
-                            ,   NC_ACTION_LISTE
-                            ,   NC_FICHE
+                                INNER JOIN
+                                        NC_FNC_ACTION
+                                    ON
+                                        NC_FNC_ACTION.FNC_INFO_ID   =   NC_FNC_INFOS.ID
+                                INNER JOIN
+                                        NC_FICHE
+                                    ON
+                                        NC_FICHE.FNC_ID =   NC_FNC_ACTION.FNC_ID::integer
+                                INNER JOIN
+                                        NC_ACTION_LISTE
+                                    ON
+                                        NC_ACTION_LISTE.ID  =   NC_FNC_ACTION.ACTION_LISTE_ID
+                                LEFT JOIN
+                                        GU_APPLICATION  GA
+                                    ON
+                                        (
+                                            NC_FICHE.FNC_CODE   !=  'QUAL'
+                                        AND NC_FICHE.FNC_CODE   !=  '0VVT001'
+                                        )
+                                    AND (
+                                            GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 0, 4)
+                                        OR  GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 2, 3)
+                                        )
+                                LEFT JOIN
+                                        BUSINESS_UNIT   B
+                                    ON
+                                        B.ID_BU =   GA.ID_BU
+                                LEFT JOIN
+                                        BUSINESS_UNIT   B1
+                                    ON
+                                        (
+                                            NC_FICHE.FNC_CODE   =   'QUAL'
+                                        OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                                        )
+                                    AND NC_FICHE.FNC_BU =   B1.ID_BU
                             WHERE
                                 NC_FNC_INFOS.ID                 =   NC_FNC_ACTION.FNC_INFO_ID
-                            AND NC_FNC_INFOS.ID                 =   $inf_id
+                            AND    NC_FNC_INFOS.ID              = $inf_id  
                             AND NC_FICHE.FNC_ID                 =   CAST(NC_FNC_ACTION.FNC_ID   AS  integer)
                             AND NC_ACTION_LISTE.ID              =   NC_FNC_ACTION.ACTION_LISTE_ID
                             AND NC_FNC_ACTION.ACTION_LISTE_ID   =   $id_
@@ -361,78 +402,9 @@ for ($i = 0; $i < @pg_num_rows($rQueryId); $i++) {
                                 OR  NC_FNC_INFOS.ETAT           =   'en cours'
                                 )
                             AND NC_ACTION_LISTE.TYPE            !=  'curative'
-                            AND NC_FNC_INFOS.IMPACT             =   '$imp_' 
-                            AND NC_FNC_INFOS.FAILLE_IDENTIFIEE                   =   '$faille_'
+                            AND NC_FNC_INFOS.IMPACT             =   '$imp_'
+                            AND NC_FNC_INFOS.FAILLE_IDENTIFIEE                   =   '$faille_' 
                             "
-    ;
-
-    /* if (isset($_REQUEST['slctActionValidationFiltre'])) {
-    if (!empty($_REQUEST['slctActionValidationFiltre']))
-    $zSqlInfo .= " AND nc_fnc_infos.etat = '{$_REQUEST['slctActionValidationFiltre']}' ";
-    }*/
-
-    $zSqlInfo .= "
-                           )AS  TEMP
-                                LEFT JOIN
-                                    (
-                                        SELECT
-                                            DISTINCT
-                                            LIB_BU
-                                        ,   FNC_ID
-                                        FROM
-                                            NC_FICHE    F
-                                        INNER JOIN
-                                            GU_APPLICATION  A
-                                        ON
-                                            (
-                                                (
-                                                    CHAR_LENGTH(TRIM(F.FNC_CODE))   =   3
-                                                AND SUBSTR(F.FNC_CODE, 0, 4)        =   A.CODE
-                                                )
-                                            AND (
-                                                    F.FNC_CODE  !=  'QUAL'
-                                                OR  F.FNC_CODE  !=  '0VVT001'
-                                                )
-                                            )
-                                        OR  (
-                                                (
-                                                    CHAR_LENGTH(TRIM(F.FNC_CODE))   =   6
-                                                AND SUBSTR(F.FNC_CODE, 0, 4)        =   A.CODE
-                                                )
-                                            AND (
-                                                    F.FNC_CODE  !=  'QUAL'
-                                                OR  F.FNC_CODE  !=  '0VVT001'
-                                                )
-                                            )
-                                        OR  (
-                                                (
-                                                    CHAR_LENGTH(TRIM(F.FNC_CODE))   =   7
-                                                AND F.FNC_CODE  ILIKE   '0%'
-                                                AND F.FNC_CODE                      !=  '0VVT001'
-                                                AND SUBSTR(F.FNC_CODE, 2, 3)        =   A.CODE
-                                                )
-                                            AND F.FNC_CODE  !=  'QUAL'
-                                            )
-                                        INNER JOIN
-                                            BUSINESS_UNIT   B
-                                        ON
-                                            B.ID_BU =   A.ID_BU
-                                        UNION
-                                        SELECT
-                                            LIB_BU
-                                        ,   FNC_ID
-                                        FROM    NC_FICHE    NCF
-                                        INNER JOIN
-                                            BUSINESS_UNIT   BU
-                                        ON
-                                            NCF.FNC_BU  =   BU.ID_BU
-                                        AND (
-                                                NCF.FNC_CODE    =   'QUAL'
-                                            OR  NCF.FNC_CODE    =   '0VVT001'
-                                            )
-                                    )   AS  TEMP2
-                                ON
-                                    TEMP2.FNC_ID    =   TEMP.FNC_ID_L"
     ;
 
     /*echo '<pre>';

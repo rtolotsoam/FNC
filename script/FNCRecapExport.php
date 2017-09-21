@@ -6,88 +6,9 @@ if (isset($_REQUEST['txtDate1'])) {
     $dDate2 = $_REQUEST['txtDate2_'];
 } else {
     $dDate1 = date("Y-m-01");
-    $dDate2 = date("Y-m-d");}
-
-// fnc
-function _sql($_conn, $_column)
-{
-    $zSqlFnc   = "SELECT   DISTINCT $_column AS valeur FROM nc_fiche WHERE ($_column IS NOT NULL OR $_column <> '') ORDER BY $_column";
-    $oQueryFnc = @pg_query($_conn, $zSqlFnc);
-    $iNbFnc    = @pg_num_rows($oQueryFnc);
-
-    $res = "<option value=\"\" style=\"font-weight: normal; font-style: italic; \">(tous)</option>";
-
-    for ($i = 0; $i < $iNbFnc; $i++) {
-        $toFnc = @pg_fetch_array($oQueryFnc, $i);
-        $res .= " <option value=\"" . $toFnc['valeur'] . "\" >" . $toFnc['valeur'] . "</option>";
-    }
-    return $res;
-}
-function loadBu($conn)
-{
-    $sqlLoadBu     = "";
-    $ContentLoadBu = "";
-    $sqlLoadBu .= "
-            SELECT distinct lib_bu FROM nc_fiche f
-            INNER JOIN gu_application a ON
-            substring(f.fnc_code FROM 1 for 3) = a.code
-            INNER JOIN  business_unit
-            b ON b.id_bu = a.id_bu order by lib_bu
-             ";
-    $queryLoadBu = pg_query($conn, $sqlLoadBu);
-    $ContentLoadBu .= "<option style = 'font-size:10px;' value='' class='optTitle'>--Tous--</option>";
-    while ($row = pg_fetch_array($queryLoadBu)) {
-        $ContentLoadBu .= "<option style = 'font-size:10px;' value='" . $row['lib_bu'] . "' class='optTitle'>" . $row['lib_bu'] . "</option>";
-    }
-    return $ContentLoadBu;
-}
-/*
-$sSqlCause1 = "SELECT * FROM nc_cause ORDER BY libelle ASC;";
-$rQueryCause1 = @pg_query($conn, $sSqlCause1);
-$iNbCause1 = @pg_num_rows($rQueryCause1);
- */
-
-function _sqlBu($_ficheId, $_conn)
-{
-    $sqlBu = "
-        SELECT lib_bu FROM nc_fiche f
-       INNER JOIN gu_application a ON
-        substring(f.fnc_code FROM 1 for 3) = a.code
-        INNER JOIN  business_unit
-          b ON b.id_bu = a.id_bu  WHERE f.fnc_id = '$_ficheId' ";
-
-    $queryBu  = @pg_query($_conn, $sqlBu);
-    $iNbBu    = @pg_num_rows($queryBu);
-    $iNbAppar = @pg_num_rows($queryBu);
-    $row      = @pg_fetch_row($queryBu);
-    return $row[0];
-
+    $dDate2 = date("Y-m-d");
 }
 
-// typologie
-$zSqlTypologie   = " SELECT typologie_id, typologie_libelle FROM nc_typologie WHERE typologie_actif IS NULL ORDER BY typologie_libelle";
-$oQueryTypologie = @pg_query($conn, $zSqlTypologie);
-$iNbTypologie    = @pg_num_rows($oQueryTypologie);
-
-// imputation
-$zSqlImputation   = " SELECT imputation_id, imputation_libelle FROM nc_imputation WHERE imputation_actif IS NULL ORDER BY imputation_libelle";
-$oQueryImputation = @pg_query($conn, $zSqlImputation);
-$iNbImputation    = @pg_num_rows($oQueryImputation);
-
-// classement
-$sSqlClassement   = "SELECT classement_libelle FROM nc_classement ORDER BY classement_libelle ASC;";
-$rQueryClassement = @pg_query($conn, $sSqlClassement) or die(@pg_last_error($conn));
-$iNbClassement    = @pg_num_rows($rQueryClassement);
-
-// module
-$sSqlModule   = "SELECT module_libelle FROM nc_module ORDER BY module_libelle ASC;";
-$rQueryModule = @pg_query($conn, $sSqlModule) or die(@pg_last_error($conn));
-$iNbModule    = @pg_num_rows($rQueryModule);
-
-// process
-$sSqlProcess   = "SELECT process_libelle FROM nc_process ORDER BY process_libelle ASC;";
-$rQueryProcess = @pg_query($conn, $sSqlProcess) or die(@pg_last_error($conn));
-$iNbProcess    = @pg_num_rows($rQueryProcess);
 
 //en tete du tableau
 $entete = "    <table id=\"tabNC\" name=\"tabNC\" border=\"1\" cellspacing=\"1\" cellpadding=\"1\">
@@ -140,172 +61,177 @@ $entete = "    <table id=\"tabNC\" name=\"tabNC\" border=\"1\" cellspacing=\"1\"
                      <td class=\"entete\"  bgcolor = \"#1E5799\" style=\"padding-top: 5px; padding-left: 5px; color:white;\" ><b>Taux restant</b></td>
                      <td class=\"entete\"  bgcolor = \"#1E5799\" style=\"padding-top: 5px; padding-left: 5px; color:white;\" ><b>G&eacute;n&eacute;ralisation</b></td>
                   </tr>";
-/*
-$entete .= "<th style=\"padding-top: 5px; padding-left: 5px\">Typo</th>
- */
-// echo $entete ;
 
-// recuperation des variables en-tete du tableau
-$zClient     = $_REQUEST['slctClient'];
-$zCode       = $_REQUEST['slctCode'];
-$zType       = $_REQUEST['slctType'];
-$zStatut     = $_REQUEST['slctStatut'];
-$zTypologie  = $_REQUEST['slctTypologie'];
-$zImputation = $_REQUEST['slctImputation'];
-/*$zClassement    = $_REQUEST['slctClassement'];
-$zModule        = $_REQUEST['slctModule'];
-$zProcess        = $_REQUEST['slctProcess'];
-$iCause1 = $_REQUEST['slctCause1'];*/
 
-// requete pour recherche
-$zSqlRecap = "select*from(";
-$zSqlRecap .= "   SELECT   fnc_ref,fnc_client, fnc_code, fnc_createur, fnc_statut,
-                     \"fnc_creationDate\", fnc_type, nc_fiche.fnc_id as id_fnc,
-                     fnc_motif, fnc_cause, fnc_typologie,
-                     fnc_imputation, fnc_ref, fnc_process,
-                     fnc_classement, fnc_module, fnc_typo,fnc_autre_cplmnt ";
-$zSqlRecap .= " ,fnc_gravite_id,fnc_frequence_id,fnc_freq_cat_id,fnc_grav_cat_id ";
-$zSqlRecap .= " FROM nc_fiche LEFT JOIN nc_motif ON nc_motif.fnc_id = nc_fiche.fnc_id
-               WHERE    nc_fiche.\"fnc_creationDate\" BETWEEN '$dDate1' AND '$dDate2' ";
+        if($dDate1 != $dDate2) {   
 
-               
-if (!empty($zClient)) {
-    $zSqlRecap .= "AND fnc_client = '$zClient' ";
-}
-
-if (!empty($zCode)) {
-    $zSqlRecap .= "AND fnc_code = '$zCode' ";
-}
-
-if (!empty($zType)) {
-    $zSqlRecap .= "AND fnc_type = '$zType' ";
-}
-
-if (!empty($zStatut)) {
-    $zSqlRecap .= "AND fnc_statut = '$zStatut' ";
-}
-
-if (!empty($iCause1)) {
-    $zSqlRecap .= " AND SUBSTRING(fnc_cause FROM 1 FOR 1) = '{$iCause1}' ";
-}
-
-if (!empty($zTypologie)) {
-    if ($zTypologie == "vide") {
-        $zSqlRecap .= "AND (fnc_typologie IS NULL)";
-    } else {
-        $zSqlRecap .= "AND fnc_typologie = '$zTypologie' ";
-    }
-
-}
-if (!empty($zImputation)) {
-    if ($zImputation == "vide") {
-        $zSqlRecap .= "AND (fnc_imputation IS NULL)";
-    } else {
-        $zSqlRecap .= "AND fnc_imputation = '$zImputation' ";
-    }
-
-}
-/*
-if(!empty($zClassement))
-{
-if($zClassement == "vide") $zSqlRecap .= "AND (fnc_classement = '')";
-else $zSqlRecap .= "AND fnc_classement = '$zClassement' ";
-}
-
-if(!empty($zModule))
-{
-if($zModule == "vide") $zSqlRecap .= "AND (fnc_module = '')";
-else $zSqlRecap .= "AND fnc_module = '$zModule' ";
-}
-if(!empty($zProcess))
-{
-if($zProcess == "vide") $zSqlRecap .= "AND (fnc_process = '')";
-else $zSqlRecap .= "AND fnc_process = '$zProcess' ";
-}
- */
-if (!empty($_REQUEST['slctBU'])) {
-    $buTemp = $_REQUEST['slctBU'];
-    $zSqlRecap .= "and fnc_code in (SELECT distinct fnc_code FROM nc_fiche f
-            INNER JOIN gu_application a ON
-            substring(f.fnc_code FROM 1 for 3) = a.code
-            INNER JOIN  business_unit
-            b ON b.id_bu = a.id_bu
-            where b.lib_bu ilike '%" . $buTemp . "%'
-
-      order by fnc_code)";
-}
-$zSqlRecap .= "  GROUP BY nc_fiche.fnc_id, fnc_type,fnc_client, fnc_code, fnc_statut, \"fnc_creationDate\", fnc_motif,                 fnc_cause, fnc_typologie, fnc_imputation, fnc_ref, fnc_process,   fnc_classement, fnc_module, fnc_typo
-                     ";
-$sqlBU = "";
-$iBU   = trim($_REQUEST['slctBU']);
-if (isset($_REQUEST['slctBU']) && $_REQUEST['slctBU'] != '') {
-    $sqlBU .= "  and lib_bu ilike '%{$iBU}%'  ";
-}
-$zSqlRecap .= "
-                )AS TEMP
-                LEFT JOIN
-                    (
+                
+                $zSqlRecap      = " 
                         SELECT DISTINCT
-                            LIB_BU
-                        ,   FNC_ID
+                            FNC_REF
+                        ,   FNC_CLIENT
+                        ,   CASE
+                                WHEN
+                                    NC_FICHE.FNC_CODE   =   'QUAL'
+                                OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                                THEN
+                                    B1.LIB_BU
+                                ELSE
+                                    B.LIB_BU
+                            END LIB_BU
+                        ,   FNC_CODE
+                        ,   FNC_CREATEUR
+                        ,   FNC_STATUT
+                        ,   \"fnc_creationDate\"
+                        ,   FNC_TYPE
+                        ,   NC_FICHE.FNC_ID     AS  ID_FNC
+                        ,   FNC_MOTIF
+                        ,   FNC_CAUSE
+                        ,   FNC_TYPOLOGIE
+                        ,   FNC_IMPUTATION
+                        ,   FNC_REF
+                        ,   FNC_PROCESS
+                        ,   FNC_CLASSEMENT
+                        ,   FNC_MODULE
+                        ,   FNC_TYPO
+                        ,   FNC_AUTRE_CPLMNT
+                        ";
+                $zSqlRecap      .= " 
+                        ,   FNC_GRAVITE_ID
+                        ,   FNC_FREQUENCE_ID
+                        ,   FNC_FREQ_CAT_ID
+                        ,   FNC_GRAV_CAT_ID
+                        ";
+                $zSqlRecap      .= " 
                         FROM
-                            NC_FICHE    F
-                        INNER JOIN
-                            GU_APPLICATION  A
-                        ON
+                            NC_FICHE
+                        LEFT JOIN
+                                NC_MOTIF
+                            ON
+                                NC_MOTIF.FNC_ID =   NC_FICHE.FNC_ID
+                        LEFT JOIN
+                                GU_APPLICATION  GA
+                            ON
                                 (
-                                    (
-                                        CHAR_LENGTH(TRIM(F.FNC_CODE))   =   3
-                                    AND SUBSTR(F.FNC_CODE, 0, 4)        =   A.CODE
-                                    )
-                                AND (
-                                        F.FNC_CODE  !=  'QUAL'
-                                    OR  F.FNC_CODE  !=  '0VVT001'
-                                    )
+                                    NC_FICHE.FNC_CODE   !=  'QUAL'
+                                AND NC_FICHE.FNC_CODE   !=  '0VVT001'
                                 )
-                            OR  (
-                                    (
-                                        CHAR_LENGTH(TRIM(F.FNC_CODE))   =   6
-                                    AND SUBSTR(F.FNC_CODE, 0, 4)        =   A.CODE
-                                    )
-                                AND (
-                                        F.FNC_CODE  !=  'QUAL'
-                                    OR  F.FNC_CODE  !=  '0VVT001'
-                                    )
+                            AND (
+                                    GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 0, 4)
+                                OR  GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 2, 3)
                                 )
-                            OR  (
-                                    (
-                                        CHAR_LENGTH(TRIM(F.FNC_CODE))   =   7
-                                    AND F.FNC_CODE  ILIKE   '0%'
-                                    AND F.FNC_CODE                      !=  '0VVT001'
-                                    AND SUBSTR(F.FNC_CODE, 2, 3)        =   A.CODE
-                                    )
-                                AND F.FNC_CODE  !=  'QUAL'
+                        LEFT JOIN
+                                BUSINESS_UNIT   B
+                            ON
+                                B.ID_BU =   GA.ID_BU
+                        LEFT JOIN
+                                BUSINESS_UNIT   B1
+                            ON
+                                (
+                                    NC_FICHE.FNC_CODE   =   'QUAL'
+                                OR  NC_FICHE.FNC_CODE   =   '0VVT001'
                                 )
-                        INNER JOIN
-                            BUSINESS_UNIT   B
-                        ON
-                            B.ID_BU     =   A.ID_BU" . $sqlBU . "
-                        -- and lib_bu ='RC'
-                        UNION
-                        SELECT
-                            LIB_BU
-                        ,   FNC_ID
-                        FROM    NC_FICHE    NCF
-                        INNER JOIN
-                            BUSINESS_UNIT   BU
-                        ON
-                            NCF.FNC_BU  =   BU.ID_BU
-                        AND (
-                                NCF.FNC_CODE    =   'QUAL'
-                            OR  NCF.FNC_CODE    =   '0VVT001'
-                            )    
-                    )   AS  TEMP2
-                ON
-                    TEMP2.FNC_ID    =   TEMP.ID_FNC
-                ORDER BY
-                    FNC_CLIENT  ASC
-   ";
+                            AND NC_FICHE.FNC_BU =   B1.ID_BU    
+                        WHERE
+                            NC_FICHE.\"fnc_creationDate\"   >=  '$dDate1'   
+                        AND NC_FICHE.\"fnc_creationDate\"   <=  '$dDate2'
+                        ";
+        }else{
+
+   
+                $zSqlRecap      = "    
+                        SELECT DISTINCT
+                            FNC_REF
+                        ,   FNC_CLIENT
+                        ,   CASE
+                                WHEN
+                                    NC_FICHE.FNC_CODE   =   'QUAL'
+                                OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                                THEN
+                                    B1.LIB_BU
+                                ELSE
+                                    B.LIB_BU
+                            END LIB_BU
+                        ,   FNC_CODE
+                        ,   FNC_CREATEUR
+                        ,   FNC_STATUT
+                        ,   \"fnc_creationDate\"
+                        ,   FNC_TYPE
+                        ,   NC_FICHE.FNC_ID     AS  ID_FNC
+                        ,   FNC_MOTIF
+                        ,   FNC_CAUSE
+                        ,   FNC_TYPOLOGIE
+                        ,   FNC_IMPUTATION
+                        ,   FNC_REF
+                        ,   FNC_PROCESS
+                        ,   FNC_CLASSEMENT
+                        ,   FNC_MODULE
+                        ,   FNC_TYPO
+                        ,   FNC_AUTRE_CPLMNT
+                        ";
+                $zSqlRecap      .= " 
+                        ,   FNC_GRAVITE_ID
+                        ,   FNC_FREQUENCE_ID
+                        ,   FNC_FREQ_CAT_ID
+                        ,   FNC_GRAV_CAT_ID
+                        ";
+                $zSqlRecap      .= " 
+                        FROM
+                            NC_FICHE
+                        LEFT JOIN
+                                NC_MOTIF
+                            ON
+                                NC_MOTIF.FNC_ID =   NC_FICHE.FNC_ID
+                        LEFT JOIN
+                                GU_APPLICATION  GA
+                            ON
+                                (
+                                    NC_FICHE.FNC_CODE   !=  'QUAL'
+                                AND NC_FICHE.FNC_CODE   !=  '0VVT001'
+                                )
+                            AND (
+                                    GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 0, 4)
+                                OR  GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 2, 3)
+                                )
+                        LEFT JOIN
+                                BUSINESS_UNIT   B
+                            ON
+                                B.ID_BU =   GA.ID_BU
+                        LEFT JOIN
+                                BUSINESS_UNIT   B1
+                            ON
+                                (
+                                    NC_FICHE.FNC_CODE   =   'QUAL'
+                                OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                                )
+                            AND NC_FICHE.FNC_BU =   B1.ID_BU
+                        WHERE
+                            NC_FICHE.\"fnc_creationDate\"   =  '$dDate1'    
+                        ";
+
+        }
+
+
+$zSqlRecap .= "  GROUP BY
+                        NC_FICHE.FNC_ID
+                    ,   FNC_TYPE
+                    ,   FNC_CLIENT
+                    ,   FNC_CODE
+                    ,   FNC_STATUT
+                    ,   \"fnc_creationDate\"
+                    ,   FNC_MOTIF
+                    ,   FNC_CAUSE
+                    ,   FNC_TYPOLOGIE
+                    ,   FNC_IMPUTATION
+                    ,   FNC_REF
+                    ,   FNC_PROCESS
+                    ,   FNC_CLASSEMENT
+                    ,   FNC_MODULE
+                    ,   FNC_TYPO
+                    ,   B1.LIB_BU
+                    ,   B.LIB_BU
+               ";
+
 $oQueryRecap = @pg_query($conn, $zSqlRecap) or die($zSqlRecap . @pg_last_error($conn));
 $iNbRecap    = @pg_num_rows($oQueryRecap);
 // echo '<pre>';
@@ -313,9 +239,7 @@ $iNbRecap    = @pg_num_rows($oQueryRecap);
 // echo '<pre>';
 // contenu de la recherche
 
-$sqlBU   = "";
 $corps   = "";
-$aCauses = array();
 for ($i = 0; $i < $iNbRecap; $i++) {
     $toResRecap = @pg_fetch_array($oQueryRecap, $i);
 
@@ -386,12 +310,7 @@ for ($i = 0; $i < $iNbRecap; $i++) {
     }
     /****************** Fin modif ******************/
 
-    /*
-    $aCauses = explode("*#|#*", $toResRecap['fnc_cause']);
-    $sCause2 = $aCauses[1];
-    $sCause3 = $aCauses[2];
-    $aResLibelleCause1 = @pg_fetch_array(@pg_query($conn, "SELECT libelle FROM nc_cause WHERE id = '{$aCauses[0]}';"));
-     */
+    
 
     // selection libelle nc_motif apparition
     $sqlSlctAppar = "SELECT libelle FROM nc_motif INNER JOIN nc_fiche ON nc_fiche.fnc_id = nc_motif.fnc_id WHERE type_motif = 'Apparition' AND nc_fiche.fnc_id = '$idFnc' ;";
@@ -464,16 +383,18 @@ for ($i = 0; $i < $iNbRecap; $i++) {
      */
     $bSqlNcInfos = "";
     $bSqlNcInfos .= "
-            select *from (
-            select libelle as description,fnc_id from nc_action_liste ncactlist
-            inner join nc_fnc_action nclact
-            on ncactlist.id  = nclact.action_liste_id
-            ) as descr
-            left join ( select ncaction.fnc_id,ncinfo.* from nc_fnc_infos ncinfo
-               inner join nc_fnc_action ncaction  on
-               ncaction.fnc_info_id = ncinfo.id
-
-            ) as temp on  descr.fnc_id = temp.fnc_id where temp.fnc_id::integer = {$idFnc}
+            SELECT *
+            FROM
+              ( SELECT libelle AS description,
+                       fnc_id
+               FROM nc_action_liste ncactlist
+               INNER JOIN nc_fnc_action nclact ON ncactlist.id = nclact.action_liste_id ) AS descr
+            LEFT JOIN
+              (SELECT ncaction.fnc_id,
+                      ncinfo.*
+               FROM nc_fnc_infos ncinfo
+               INNER JOIN nc_fnc_action ncaction ON ncaction.fnc_info_id = ncinfo.id ) AS TEMP ON descr.fnc_id = temp.fnc_id
+            WHERE temp.fnc_id::integer = {$idFnc}
                      ";
 
     $resultNcInfos    = pg_query($conn, $bSqlNcInfos);
@@ -528,9 +449,9 @@ for ($i = 0; $i < $iNbRecap; $i++) {
     //$sCause            = $toResRecap['fnc_cause'];
     $sTypologie  = $oResTypologie['typologie_libelle'];
     $sImputation = $oResImputation['imputation_libelle'];
-    $bu          = $_REQUEST['slctBU'];
+    
     $libBu       = $toResRecap['lib_bu'];
-    if ($libBu == '') {
+    if ($libBu == NULL) {
         $libBu = "AUCUN";
     }
     $corps .= "
@@ -564,52 +485,20 @@ for ($i = 0; $i < $iNbRecap; $i++) {
                      ";
 
     $corps .= "
-                     <td id='tdTypologie{$iId}'>
-                        <span id='spanTypologie{$iId}'>{$sTypologie}</span>
+                     <td>
+                        {$sTypologie}
                         ";
 
     $corps .= "
                      </td>
-                     <td id='tdImputation{$iId}'>
-                        <span id='spanImputation{$iId}'>{$sImputation}</span>
+                     <td>
+                        {$sImputation}
                         ";
 
     $corps .= "
                      </td>
-                       <td $colr>{$criticite}</td>
-                     <!--td id=\"tdProcess{$iId}\">
-                        <span id=\"spanProcess{$iId}\">{$sProcess}</span>";
-
-    $corps .= "
-                     </td-->";
-    /*
-    <td id=\"tdClassement{$iId}\">
-    <span id=\"spanClassement{$iId}\">{$sClassement}</span>
-    <select style=\"width: 100px; display: none\" id=\"slctClassement{$iId}\" name=\"slctClassement{$iId}\">
-    <option value=''> *** (choix) *** </option>";
-    for($il = 0; $il < $iNbClassement; $il ++)
-    {
-    $aClassement = @pg_fetch_array($rQueryClassement, $il);
-    $corps .=  "            <option value='".$aClassement['classement_libelle']."' ";
-    if($sClassement == $aClassement['classement_libelle']) $corps .= "selected";
-    $corps .= ">".$aClassement['classement_libelle']."</option>";
-    }
-    $corps .= "                </select>
-    </td>
-     */
-    $corps .= "         <!--td id=\"tdModule{$iId}\">
-                        <span id=\"spanModule{$iId}\">{$sModule}</span>
-
-                           ";
-
-    $corps .= "
-                     </td-->";
-    /*
-    <td id=\"tdTypo{$iId}\" onclick=\"edit('txtTypo{$iId}', 'spanTypo{$iId}');\">
-    <span id=\"spanTypo{$iId}\">{$sTypo}</span>
-    <textarea id=\"txtTypo{$iId}\" name=\"txtTypo{$iId}\" style=\"border: 1px solid green; background: white; width: 150px; height: 75px; display: none\" onblur=\"tide('txtTypo{$iId}', 'spanTypo{$iId}')\">{$sTypo}</textarea>
-    </td>
-     */
+                       <td $colr>{$criticite}</td>";
+       
     $tx_avacmnt = $arrtNcInfos['tx_avacmnt'];
     $tx_restant = 0;
     $tx_restant = 100 - $tx_avacmnt;

@@ -39,74 +39,6 @@ $zSelectRef      = "SELECT fnc_ref FROM nc_fiche ORDER BY fnc_ref ASC";
 $oQuerySelectRef = @pg_query($conn, $zSelectRef) or die(pg_last_error($conn));
 $iNbSelectRef    = @pg_num_rows($oQuerySelectRef);
 
-$zSql = "
-SELECT
-    *
-FROM
-    (
-        SELECT
-            *
-        FROM
-            (
-                SELECT
-                    NC_FICHE.FNC_ID     AS  ID
-                ,   NC_FICHE.FNC_CLIENT AS  CLIENT
-                ,   NC_FICHE.FNC_TYPE   AS  TYPE
-                ,   NC_FICHE.FNC_REF    AS  REFFNC
-                ,   NC_ACTION.\"ACTION_DEBDATE\"           AS  DATEDEB
-                ,   NC_ACTION.\"ACTION_FINDATE\"           AS  DATEFIN
-                ,   NC_ACTION.ACTION_DESCRIPTION    AS  DESCRIPTION
-                ,   NC_ACTION.ACTION_RESPONSABLE    AS  RESPONSABLE
-                ,   FNC_GRAVITE_ID
-                ,   FNC_FREQUENCE_ID
-                ,   FNC_FREQ_CAT_ID
-                ,   FNC_GRAV_CAT_ID
-                FROM
-                    NC_FICHE
-                ,   NC_ACTION
-                WHERE
-                    NC_ACTION.ACTION_ETAT   !=  'ok'
-                AND NC_FICHE.FNC_ID         =   NC_ACTION.\"ACTION_FNCID\"
-                AND NC_ACTION.ACTION_TYPE   =   'curative'
-                ORDER BY
-                    NC_ACTION.\"ACTION_FINDATE\"    ASC,
-                    NC_FICHE.FNC_REF    ASC
-            )   AS  TEMP
-        LEFT JOIN
-            (
-                SELECT
-                    DISTINCT
-                    LIB_BU
-                ,   FNC_ID
-                FROM
-                    NC_FICHE    F
-                INNER JOIN
-                    GU_APPLICATION  A
-                ON
-                /*
-                    substring(f.fnc_code FROM 1 for 3) = a.code
-                */
-                    (
-                        (
-                            SUBSTRING(F.FNC_CODE FROM 1 FOR 3)  =   A.CODE
-                        AND LENGTH(F.FNC_CODE)                  =   6
-                        )
-                    OR  (
-                            SUBSTRING(F.FNC_CODE FROM 2 FOR 3)  =   A.CODE
-                        AND LENGTH(F.FNC_CODE)                  =   7
-                        )
-                    )
-                INNER JOIN
-                    BUSINESS_UNIT   B
-                ON
-                    B.ID_BU =   A.ID_BU
-            )   AS  TEMP2
-        ON
-            TEMP2.FNC_ID    =   TEMP.ID
-    )   AS  TEMP3
-ORDER BY
-    DATEDEB ASC"
-;
 ?>
 <html>
   <head>
@@ -415,20 +347,7 @@ if (isset($_REQUEST["search"]) == 1) {
 
 } else {
 
-    // echo $_REQUEST["search"]; exit("x");
 
-    //echo "te ".$txtCrationDate." fef" ;
-    /*  $zSqlFNCduJour  = "select *from(";
-    $zSqlFNCduJour .= "SELECT * FROM nc_fiche WHERE \"fnc_creationDate\" BETWEEN '".date("Y-m")."-01' AND '".date("Y-m-d")."' ORDER BY \"fnc_creationDate\" DESC, \"fnc_creationHour\" DESC" ;
-    $zSqlFNCduJour  .= ") as temp
-    left join
-    (
-    SELECT distinct lib_bu,fnc_id FROM nc_fiche f
-    INNER JOIN gu_application a ON
-    substring(f.fnc_code FROM 1 for 3) = a.code
-    INNER JOIN  business_unit
-    b ON b.id_bu = a.id_bu
-    ) as temp2 on temp.fnc_id=temp2.fnc_id"; */
 
     $clauseDate = "";
     if (isset($_REQUEST['txtModifDate']) && isset($_REQUEST['txtCreateurMatr'])) {
@@ -445,37 +364,20 @@ if (isset($_REQUEST["search"]) == 1) {
     $onsearch      = $_REQUEST['onsearch'];
     $zSqlFNCduJour = "";
 
-    /*    $zSqlFNCduJour = "select (case when fnc_bu is not null then (select bu.lib_bu as xx from nc_fiche ncf inner join business_unit bu on bu.id_bu= ncf.fnc_bu where ncf.fnc_bu is not null) else 'x' end ) as bu_audit,*from(SELECT * FROM nc_fiche WHERE \"fnc_creationDate\"
-    BETWEEN '".date("Y-m")."-01' AND '".date("Y-m-d")."' ORDER BY \"fnc_creationDate\" DESC,
-    \"fnc_creationHour\" DESC) as temp left join ( SELECT distinct lib_bu,fnc_id FROM nc_fiche f
-    INNER JOIN gu_application a ON substring(f.fnc_code FROM 1 for 3) = a.code INNER JOIN business_unit b ON b.id_bu = a.id_bu
-    ) as temp2 on temp.fnc_id=temp2.fnc_id";   */
+
 
     $zSqlFNCduJour = "
                     SELECT
                         CASE
                             WHEN
-                                RES3.FNC_BU IS NULL
+                                NC_FICHE.FNC_CODE   =   'QUAL'
+                            OR  NC_FICHE.FNC_CODE   =   '0VVT001'
                             THEN
-                                0
+                                B1.LIB_BU  
                             ELSE
-                                RES3.FNC_BU
-                        END
-                                    AS  BU_0VVT
-                    ,   RES3.FNC_ID
-                    ,   (
-                            CASE
-                                WHEN
-                                    (
-                                        BU_FNC  IS  NULL
-                                    AND LIB_BU  !=  ''
-                                    )
-                                THEN
-                                    LIB_BU
-                                ELSE
-                                    BU_FNC
-                            END
-                        )           AS  BU_FNC2
+                                B.LIB_BU 
+                        END LIB_BU
+                    ,   FNC_ID
                     ,   FNC_CODE
                     ,   FNC_REF
                     ,   FNC_CP
@@ -513,86 +415,32 @@ if (isset($_REQUEST["search"]) == 1) {
                     ,   FNC_FREQ_CAT_ID
                     ,   FNC_GRAV_CAT_ID
                     FROM
-                        (
-                            SELECT
-                                *
-                            FROM
-                                NC_FICHE
-                            WHERE
-                                \"fnc_creationDate\"    $clauseDate
-                            ORDER BY
-                                \"fnc_creationDate\"  DESC
-                            ,   \"fnc_creationHour\"  DESC
-                        )   AS  RES3
-                    LEFT JOIN
-                        (
-                            SELECT
-                                DISTINCT
-                                LIB_BU
-                            ,   FNC_ID
-                            FROM
-                                NC_FICHE    F
-                            INNER JOIN
-                                GU_APPLICATION  A
+                        NC_FICHE
+                        LEFT JOIN
+                                GU_APPLICATION  GA
                             ON
                                 (
-                                    (
-                                        SUBSTRING(F.FNC_CODE FROM 1 FOR 3)  =   A.CODE
-                                    AND LENGTH(F.FNC_CODE)                  =   6
-                                    )
-                                OR  (
-                                        SUBSTRING(F.FNC_CODE FROM 2 FOR 3)  =   A.CODE
-                                    AND LENGTH(F.FNC_CODE)                  =   7
-                                    )
-                                OR  (
-                                        F.FNC_CODE          =   A.CODE
-                                    AND LENGTH(F.FNC_CODE)  =   3
-                                    )
+                                    NC_FICHE.FNC_CODE   !=  'QUAL'
+                                AND NC_FICHE.FNC_CODE   !=  '0VVT001'
                                 )
-                            INNER JOIN
+                            AND (
+                                    GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 0, 4)
+                                OR  GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 2, 3)
+                                )
+                        LEFT JOIN
                                 BUSINESS_UNIT   B
                             ON
-                                B.ID_BU =   A.ID_BU
-                        )   AS  RES4
-                    ON
-                        RES3.FNC_ID =   RES4.FNC_ID
-                    LEFT JOIN
-                        (
-                            SELECT
-                                *
-                            FROM
+                                B.ID_BU =   GA.ID_BU
+                        LEFT JOIN
+                                BUSINESS_UNIT   B1
+                            ON
                                 (
-                                    SELECT
-                                        (
-                                            CASE
-                                                WHEN
-                                                    FNC_BU  IS  NOT NULL
-                                                THEN
-                                                    XX
-                                                ELSE
-                                                    'xx'
-                                            END
-                                        )       AS  BU_FNC
-                                    ,   *
-                                    FROM
-                                        (
-                                            SELECT
-                                                BU.LIB_BU   AS  XX
-                                            ,   FNC_BU
-                                            ,   FNC_ID
-                                            FROM
-                                                NC_FICHE    NCF
-                                            INNER JOIN
-                                                BUSINESS_UNIT   BU
-                                            ON
-                                                BU.ID_BU    =   NCF.FNC_BU
-                                            WHERE
-                                                NCF.FNC_BU  IS  NOT NULL
-                                        )   AS  RES_BU
-                                )   AS  RES2
-                        )   AS  RES5
-                    ON
-                        RES3.FNC_ID =   RES5.FNC_ID
+                                    NC_FICHE.FNC_CODE   =   'QUAL'
+                                OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                                )
+                            AND NC_FICHE.FNC_BU =   B1.ID_BU
+                    WHERE 
+                        \"fnc_creationDate\"    $clauseDate
               ";
 
     /*<<< requete pour rechercher fnc onload*/
@@ -619,9 +467,7 @@ if (isset($_REQUEST["search"]) == 1) {
         $slctTraitStatutCor = $_REQUEST['slctTraitStatutCor'];
         $fnc_motif          = $_REQUEST['motif_fnc'];
 
-        // print_r($_REQUEST);
-        $zSqlFNCduJour .= "
-                 WHERE 1=1";
+        
         if (isset($fnc_motif)) {
             $zSqlFNCduJour .= " AND fnc_motif ilike '%$fnc_motif%' ";
         }
@@ -684,7 +530,7 @@ if (isset($_REQUEST["search"]) == 1) {
             $zSqlFNCduJour .= " AND (fnc_type ILIKE '%$zType%')";
         }
 
-        $zSqlFNCduJour .= " ORDER BY \"fnc_creationDate\", \"fnc_creationHour\" ASC";
+        $zSqlFNCduJour .= " ORDER BY \"fnc_creationDate\" ASC";
 
     }
 
@@ -695,6 +541,8 @@ if (isset($_REQUEST["search"]) == 1) {
      
     $oFNCduJour   = @pg_query($conn, $zSqlFNCduJour);
     $iNbFNCduJour = @pg_num_rows($oFNCduJour);
+
+    //echo $iNbFNCduJour;
 
     if ($iNbFNCduJour != 0) {
 
@@ -809,7 +657,7 @@ if (isset($_REQUEST["search"]) == 1) {
             }
 
             $toFNCduJourCodeTab2   = $toFNCduJour['fnc_code'];
-            $toFNCduJourLib_buTab2 = $toFNCduJour['bu_fnc2'];
+            $toFNCduJourLib_buTab2 = $toFNCduJour['lib_bu'];
 
             $toFNCduJourFnc_refTab2          = $toFNCduJour['fnc_ref'];
             $toFNCduJourfnc_creationDateTab2 = $toFNCduJour['fnc_creationDate'];
@@ -818,14 +666,13 @@ if (isset($_REQUEST["search"]) == 1) {
             $toFNCduJourFnc_typeTab2         = $toFNCduJour['fnc_type'];
             $toFNCduJourFnc_versionTab2      = $toFNCduJour['fnc_version'];
             $toFNCduJourFnc_idTab2           = $toFNCduJour['fnc_id'];
-            $bu_fnc2_                        = $toFNCduJour['bu_0vvt'];
 
             /*
             ICI le test bu
              */
             //print_r($toFNCduJour);
             # Mahefarivo
-            if ($toFNCduJourCodeTab2 == '0VVT001' && $bu_fnc2_ == 0) {
+            if ($toFNCduJourCodeTab2 == '0VVT001' && $toFNCduJourLib_buTab2 == NULL) {
                 /*echo $toFNCduJourCodeTab2;
                 echo '</br>';
                 echo $bu_00vvt;*/

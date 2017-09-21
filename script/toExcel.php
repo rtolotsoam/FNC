@@ -76,32 +76,66 @@
 					            <td><strong>Date de fin </strong></td>
 					        </tr>";
 
-/*$sSql = "SELECT  nc_fiche.fnc_frequence_id,nc_fiche.fnc_gravite_id,nc_fiche.fnc_id AS id, nc_fiche.fnc_client AS client,
-					nc_fiche.fnc_type AS type, nc_fiche.fnc_ref AS reffnc,
-					nc_action.\"action_debDate\" AS datedeb, nc_action.\"action_finDate\" AS datefin,
-					nc_action.action_description AS description, nc_action.action_responsable AS responsable,
-
-					nc_action.action_etat AS action_status, nc_action.action_date_suivi AS action_date_suivi,
-					nc_action.action_comment AS action_comment
-
-				FROM nc_fiche, nc_action
-				WHERE nc_action.action_etat != 'ok'
-					AND nc_fiche.fnc_id = nc_action.\"action_fncId\"
-					AND nc_action.action_type = '$sActionType'
-				ORDER BY nc_fiche.fnc_ref ASC"; REQUETE TALO*/
       $sSql = "
-          select *from (select *from (SELECT DISTINCT nc_fiche.\"fnc_creationDate\" as date_creat ,nc_fiche.fnc_id AS id, nc_fiche.fnc_client AS client, nc_fiche.fnc_type AS type, nc_fiche.fnc_ref AS reffnc, 
-          nc_action.\"action_debDate\" AS datedeb, nc_action.\"action_finDate\" AS datefin, nc_action.action_description AS description, 
-          nc_action.action_responsable AS responsable , fnc_gravite_id,fnc_frequence_id,fnc_freq_cat_id,fnc_grav_cat_id FROM nc_fiche,
-           nc_action WHERE nc_action.action_etat != 'ok' AND nc_fiche.fnc_id = nc_action.\"action_fncId\" AND nc_action.action_type = 'curative' 
-           ORDER BY nc_action.\"action_finDate\" ASC, nc_fiche.fnc_ref ASC ) as temp left join (
-          SELECT distinct lib_bu,fnc_id FROM nc_fiche f 
-          INNER JOIN gu_application a ON substring(f.fnc_code FROM 1 for 3) = a.code INNER JOIN business_unit b ON b.id_bu = a.id_bu
-          union
-           select lib_bu,fnc_id from nc_fiche ncf 
-           inner join business_unit bu
-           on ncf.fnc_bu = bu.id_bu) as temp2 on 
-           temp2.fnc_id =temp.id ) as temp3 order by datedeb asc";
+                SELECT
+                    NC_FICHE.\"fnc_creationDate\"    AS  DATE_CREAT
+                ,   NC_FICHE.FNC_ID    
+                ,   CASE
+                        WHEN
+                            NC_FICHE.FNC_CODE   =   'QUAL'
+                        OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                        THEN
+                            B1.LIB_BU
+                        ELSE
+                            B.LIB_BU
+                    END LIB_BU
+                ,   NC_FICHE.FNC_ID     AS  ID
+                ,   NC_FICHE.FNC_CLIENT AS  CLIENT
+                ,   NC_FICHE.FNC_TYPE   AS  TYPE
+                ,   NC_FICHE.FNC_REF    AS  REFFNC
+                ,   NC_ACTION.\"action_debDate\"  AS  DATEDEB
+                ,   NC_ACTION.\"action_finDate\"  AS  DATEFIN
+                ,   NC_ACTION.ACTION_DESCRIPTION    AS  DESCRIPTION
+                ,   NC_ACTION.ACTION_RESPONSABLE    AS  RESPONSABLE
+                ,   FNC_GRAVITE_ID
+                ,   FNC_FREQUENCE_ID
+                ,   FNC_FREQ_CAT_ID
+                ,   FNC_GRAV_CAT_ID
+                FROM
+                    NC_FICHE
+                    INNER JOIN NC_ACTION ON NC_ACTION.\"action_fncId\" = NC_FICHE.FNC_ID
+                    LEFT JOIN
+                            GU_APPLICATION  GA
+                        ON
+                            (
+                                NC_FICHE.FNC_CODE   !=  'QUAL'
+                            AND NC_FICHE.FNC_CODE   !=  '0VVT001'
+                            )
+                        AND (
+                                GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 0, 4)
+                            OR  GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 2, 3)
+                            )
+                        LEFT JOIN
+                            BUSINESS_UNIT   B
+                        ON
+                            B.ID_BU =   GA.ID_BU
+                    LEFT JOIN
+                            BUSINESS_UNIT   B1
+                        ON
+                            (
+                                NC_FICHE.FNC_CODE   =   'QUAL'
+                            OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                            )
+                        AND NC_FICHE.FNC_BU =   B1.ID_BU
+                WHERE
+                    NC_ACTION.ACTION_ETAT   !=  'ok'
+                AND NC_ACTION.ACTION_TYPE   =   'curative'
+                ORDER BY
+                    NC_ACTION.\"action_finDate\"    ASC,
+                    NC_ACTION.\"action_debDate\" ASC,
+                    NC_FICHE.FNC_REF    ASC
+            ";
+
  // exit();
 	$oQuerySql = @pg_query($conn, $sSql);
 	$iNbSql = @pg_num_rows($oQuerySql);

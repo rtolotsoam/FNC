@@ -457,7 +457,7 @@ $zSqlPiloteAction = "  SELECT
                              FROM
                               nc_action, nc_fiche
                              WHERE
-                              nc_action.\"action_fncId\" = nc_fiche.fnc_id
+                              nc_action.\"action_fncId\" = nc_fiche.fnc_id::integer
                              AND nc_fiche.fnc_id = '$iId'";
 
 $oReqPiloteAction = @pg_query($conn, $zSqlPiloteAction);

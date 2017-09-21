@@ -5,23 +5,26 @@ $zSelectRef      = "SELECT fnc_ref FROM nc_fiche ORDER BY fnc_ref ASC";
 $oQuerySelectRef = @pg_query($conn, $zSelectRef) or die(pg_last_error($conn));
 $iNbSelectRef    = @pg_num_rows($oQuerySelectRef);
 
+
 $zSql = "
-SELECT
-    *
-FROM
-    (
-        SELECT
-            *
-        FROM
-            (
                 SELECT
-                    NC_FICHE.\"FNC_CREATIONDATE\"    AS  DATE_CREAT
+                    NC_FICHE.\"fnc_creationDate\"    AS  DATE_CREAT
+                ,   NC_FICHE.FNC_ID    
+                ,   CASE
+                        WHEN
+                            NC_FICHE.FNC_CODE   =   'QUAL'
+                        OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                        THEN
+                            B1.LIB_BU
+                        ELSE
+                            B.LIB_BU
+                    END LIB_BU
                 ,   NC_FICHE.FNC_ID     AS  ID
                 ,   NC_FICHE.FNC_CLIENT AS  CLIENT
                 ,   NC_FICHE.FNC_TYPE   AS  TYPE
                 ,   NC_FICHE.FNC_REF    AS  REFFNC
-                ,   NC_ACTION.\"ACTION_DEBDATE\"  AS  DATEDEB
-                ,   NC_ACTION.\"ACTION_FINDATE\"  AS  DATEFIN
+                ,   NC_ACTION.\"action_debDate\"  AS  DATEDEB
+                ,   NC_ACTION.\"action_finDate\"  AS  DATEFIN
                 ,   NC_ACTION.ACTION_DESCRIPTION    AS  DESCRIPTION
                 ,   NC_ACTION.ACTION_RESPONSABLE    AS  RESPONSABLE
                 ,   FNC_GRAVITE_ID
@@ -30,46 +33,41 @@ FROM
                 ,   FNC_GRAV_CAT_ID
                 FROM
                     NC_FICHE
-                ,   NC_ACTION
+                    INNER JOIN NC_ACTION ON NC_ACTION.\"action_fncId\" = NC_FICHE.FNC_ID
+                    LEFT JOIN
+                            GU_APPLICATION  GA
+                        ON
+                            (
+                                NC_FICHE.FNC_CODE   !=  'QUAL'
+                            AND NC_FICHE.FNC_CODE   !=  '0VVT001'
+                            )
+                        AND (
+                                GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 0, 4)
+                            OR  GA.CODE =   SUBSTR(NC_FICHE.FNC_CODE, 2, 3)
+                            )
+                        LEFT JOIN
+                            BUSINESS_UNIT   B
+                        ON
+                            B.ID_BU =   GA.ID_BU
+                    LEFT JOIN
+                            BUSINESS_UNIT   B1
+                        ON
+                            (
+                                NC_FICHE.FNC_CODE   =   'QUAL'
+                            OR  NC_FICHE.FNC_CODE   =   '0VVT001'
+                            )
+                        AND NC_FICHE.FNC_BU =   B1.ID_BU
                 WHERE
                     NC_ACTION.ACTION_ETAT   !=  'ok'
-                AND NC_FICHE.FNC_ID         =   NC_ACTION.\"ACTION_FNCID\"
                 AND NC_ACTION.ACTION_TYPE   =   'curative'
                 ORDER BY
-                    NC_ACTION.\"ACTION_FINDATE\"    ASC,
+                    NC_ACTION.\"action_finDate\"    ASC,
+                    NC_ACTION.\"action_debDate\" ASC,
                     NC_FICHE.FNC_REF    ASC
-            )   AS  TEMP
-        LEFT JOIN
-            (
-                SELECT
-                    DISTINCT
-                    LIB_BU
-                ,   FNC_ID
-                FROM
-                    NC_FICHE    F
-                INNER JOIN
-                    GU_APPLICATION  A
-                ON
-                    SUBSTRING(F.FNC_CODE FROM 1 FOR 3)  =   A.CODE
-                INNER JOIN
-                    BUSINESS_UNIT   B
-                ON
-                    B.ID_BU =   A.ID_BU
-                UNION
-                SELECT
-                    LIB_BU
-                ,   FNC_ID
-                FROM    NC_FICHE    NCF
-                INNER JOIN
-                    BUSINESS_UNIT   BU
-                ON
-                    NCF.FNC_BU  =   BU.ID_BU
-            )   AS  TEMP2
-        ON
-            TEMP2.FNC_ID    =   TEMP.ID
-    )   AS  TEMP3
-ORDER BY
-    DATEDEB ASC";
+        ";
+
+
+
 
 /* echo "<pre>";
 print_r($zSql);
@@ -90,11 +88,6 @@ echo "</pre>";*/
 
       <link rel="stylesheet" type="text/css" href="../css/ThickBox.css" />
       <link rel="stylesheet" type="text/css" href="css/theme.blue.css" />
-
-    <!--link type="text/css" href="../css/ui.all.css" rel="stylesheet" />
-    <script type="text/javascript" src="../js/jquery-1.3.2.js"></script>
-    <script type="text/javascript" src="../js/jquery.tablesorter.js"></script>
-    <script type="text/javascript">$(document).ready(function(){$("#table1").tablesorter();});</script-->
 
     <style>
       .titre{
@@ -278,10 +271,10 @@ for ($i = 0; $i < $iNbSql; $i++) {
     if ($bu_curative == '') {
         $bu_curative = 'AUCUN';
     }
-    echo "  <tr style=\"cursor:pointer; color: $color;\" bgcolor=\"$coul\" onclick=viewFNC(" . $idFNC . "); >
+    echo "  <tr style=\"cursor:pointer;\" bgcolor=\"$coul\" onclick=viewFNC(" . $idFNC . "); >
                            <td width=\"12.5%\" class=\"contenu\">&nbsp;" . $toRes['client'] . "</td>
                            <td width=\"15%\" class=\"contenu\">&nbsp;" . $bu_curative . "</td>
-                           <td width=\"15%\" class=\"contenu\">&nbsp;" . $toRes['reffnc'] . "</td>
+                           <td style=\"color: $color !important;\" width=\"15%\" class=\"contenu\">&nbsp;" . $toRes['reffnc'] . "</td>
                            <td width=\"5%\" class=\"contenu\">&nbsp;" . $toRes['type'] . "</td>
                            <td width=\"8%\" class=\"contenu\" style='text-align: center;'>&nbsp;" . $typeApp . "</td>
                            <td width=\"8%\" class=\"contenu\" style='text-align: center;'>&nbsp;" . $toRes['date_creat'] . "</td>
